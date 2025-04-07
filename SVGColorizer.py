@@ -3,54 +3,65 @@
 # This probably should be implemented in
 # spyder/utils/icon_manager.py
 
-from lxml import etree
-from qtpy.QtWidgets import QApplication, QPushButton, QWidget, QVBoxLayout
+import re
+from qtpy.QtWidgets import QApplication, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QLabel
 from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtSvg import QSvgRenderer
-from qtpy.QtCore import QByteArray, Qt
+from qtpy.QtCore import QByteArray, Qt, QSize
 from PyQt5.QtGui import QPainter
 import qdarkstyle
+import sys
 
 
-# Methods for colorization.
 class SVGColorize:
+    """
+    Class for colorizing SVG icons using class-based targeting.
+    This class uses regex-based string manipulation which is more reliable
+    than DOM-based manipulation for this specific use case.
+    """
     def __init__(self, svg_path):
+        """Initialize with the path to an SVG file."""
         try:
-            self.tree = etree.parse(svg_path)
-            self.root = self.tree.getroot()
-        except etree.XMLSyntaxError as e:
-            print(f"Error parsing SVG file: {e}")
-            self.tree = None
-            self.root = None
+            with open(svg_path, 'r') as f:
+                self.svg_content = f.read()
+        except Exception as e:
+            print(f"Error reading SVG file: {e}")
+            self.svg_content = None
 
     def change_fill_color_by_class(self, class_name, new_color):
-        if self.root is None:
-            print("No SVG data to modify.")
+        """Change the fill color of all elements with the specified class."""
+        if self.svg_content is None:
             return
-        ns = {"svg": "http://www.w3.org/2000/svg"}
-        elements = self.root.xpath(f"//svg:*[@class='{class_name}']", namespaces=ns)
-        for element in elements:
-            element.attrib["fill"] = new_color
+        
+        # Find elements with the specified class
+        class_pattern = f'class="{class_name}"'
+        if class_pattern in self.svg_content:
+            # Replace fill attribute if it exists
+            pattern_fill = f'(class="{class_name}"[^>]*?)(fill="[^"]*?)(")'
+            if re.search(pattern_fill, self.svg_content):
+                self.svg_content = re.sub(pattern_fill, f'\\1fill="{new_color}"\\3', self.svg_content)
+            # Add fill attribute if it doesn't exist
+            else:
+                pattern_add = f'(class="{class_name}")'
+                self.svg_content = re.sub(pattern_add, f'\\1 fill="{new_color}"', self.svg_content)
+                
+            # Remove any additional fill="none" that might be present elsewhere in the element
+            pattern_none = f'(<[^>]*class="{class_name}"[^>]*?)fill="none"([^>]*?>)'
+            self.svg_content = re.sub(pattern_none, '\\1\\2', self.svg_content)
 
     def save_to_string(self):
-        if self.root is None:
-            print("No SVG data to save.")
+        """Return the colorized SVG as a string."""
+        if self.svg_content is None:
             return None
-        return etree.tostring(self.root).decode()
+        return self.svg_content
 
     def save_to_file(self, output_path):
-        if self.tree is None:
-            print("No SVG data to save.")
+        """Save the colorized SVG to a file."""
+        if self.svg_content is None or output_path is None:
             return
-        if output_path is None:
-            print("Empty path.")
-            return
-        self.tree.write(output_path, pretty_print=True)
+        with open(output_path, 'w') as f:
+            f.write(self.save_to_string())
 
-
-# Colorize an icon taking the name and a set of colors.
-# Only the name and the primary color are mandatory.
-# Returns a string with the unformatted SVG markup.
 
 def colorize_icon(
     icon_name: str,
@@ -58,6 +69,18 @@ def colorize_icon(
     color_secondary: str = "",
     color_tertiary: str = "",
 ):
+    """
+    Colorize an SVG icon by replacing fill colors for elements with specific classes.
+    
+    Args:
+        icon_name: Path to the SVG file
+        color_primary: Color to apply to elements with class="primary"
+        color_secondary: Color to apply to elements with class="secondary"
+        color_tertiary: Color to apply to elements with class="tertiary"
+        
+    Returns:
+        The colorized SVG as a string, or None if there was an error
+    """
     icon = SVGColorize(icon_name)
     icon.change_fill_color_by_class("primary", color_primary)
 
@@ -67,45 +90,72 @@ def colorize_icon(
     if color_tertiary:
         icon.change_fill_color_by_class("tertiary", color_tertiary)
 
-    svg_string = icon.save_to_string()
-    return svg_string
+    return icon.save_to_string()
 
 
-# usage example
+# Test function
+def test_icon_colorization():
+    """Test the SVG colorization with a visual demo."""
+    # Create a Qt application
+    app = QApplication([])
+    app.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5'))
 
-# Create a Qt application
-app = QApplication([])
+    # Create a window
+    window = QWidget()
+    window.setWindowTitle("SVG Colorizer Test")
+    layout = QVBoxLayout()
+    
+    # Create a horizontal layout for the icons
+    icons_layout = QHBoxLayout()
+    
+    # Test both example files
+    for file_name in ["example.svg", "example2.svg"]:
+        # Create a layout for this example
+        example_layout = QVBoxLayout()
+        
+        # Add a label for the file name
+        label = QLabel(file_name)
+        label.setAlignment(Qt.AlignCenter)
+        example_layout.addWidget(label)
+        
+        # Get SVG data
+        svg_data = colorize_icon(file_name, "#ff0000", "#00ff00", "#0000ff")
+        
+        if svg_data:
+            # Convert SVG data to bytes
+            svg_bytes = QByteArray(svg_data.encode())
+            
+            # Create renderer and pixmap
+            renderer = QSvgRenderer(svg_bytes)
+            pixmap = QPixmap(128, 128)
+            pixmap.fill(Qt.transparent)
+            
+            # Render SVG to pixmap
+            painter = QPainter(pixmap)
+            renderer.render(painter)
+            painter.end()
+            
+            # Create icon and button
+            button = QPushButton()
+            button.setFixedSize(150, 150)
+            button.setIconSize(QSize(128, 128))
+            button.setIcon(QIcon(pixmap))
+            example_layout.addWidget(button)
+        else:
+            error_label = QLabel("Failed to load icon")
+            error_label.setStyleSheet("color: red")
+            example_layout.addWidget(error_label)
+        
+        # Add this example to the icons layout
+        icons_layout.addLayout(example_layout)
+    
+    layout.addLayout(icons_layout)
+    window.setLayout(layout)
+    window.show()
+    
+    # Run the application
+    sys.exit(app.exec_())
 
-# Set the dark style
-dark_stylesheet = qdarkstyle.load_stylesheet(qt_api='pyqt5')
-app.setStyleSheet(dark_stylesheet)
 
-# Create a window
-window = QWidget()
-layout = QVBoxLayout()
-
-# Get SVG data from colorize_icon
-svg_data = colorize_icon("example.svg", "#fafafa", "#44DEB0", "#ff0000")
-svg_bytes = QByteArray(svg_data.encode())  # Convert SVG data to bytes
-
-# Create QPixmap from SVG data
-pixmap = QPixmap(256, 256)  # Specify the size of the icon
-renderer = QSvgRenderer(svg_bytes)
-pixmap.fill(Qt.transparent)  # Fill with transparency
-painter = QPainter(pixmap)
-renderer.render(painter)
-
-# Create QIcon from QPixmap
-icon = QIcon(pixmap)
-
-# Create a button with the icon
-button = QPushButton()
-button.setIcon(icon)
-button.setIconSize(pixmap.size())  # Set icon size to match the pixmap size
-layout.addWidget(button)
-
-window.setLayout(layout)
-window.show()
-
-# Run the application
-app.exec_()
+if __name__ == "__main__":
+    test_icon_colorization()
