@@ -89,10 +89,6 @@ class SVGColorize:
         self.tree.write(output_path, pretty_print=True)
 
 
-# Colorize an icon taking the name and a set of colors.
-# Only the name and the primary color are mandatory.
-# Returns a string with the unformatted SVG markup.
-
 def colorize_icon(
     icon_name: str,
     color_primary: str,
