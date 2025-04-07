@@ -14,7 +14,22 @@ import qdarkstyle
 
 # Methods for colorization.
 class SVGColorize:
+    """
+    A class for modifying SVG files by changing the fill colors of elements
+    with specific class attributes.
+    
+    This implementation uses lxml for XML parsing and XPath for element selection,
+    providing a reliable and maintainable way to manipulate SVG files.
+    """
     def __init__(self, svg_path):
+        """
+        Initialize the SVGColorize object with the path to an SVG file.
+        
+        Parameters
+        ----------
+        svg_path : str
+            Path to the SVG file to be colorized
+        """
         try:
             self.tree = etree.parse(svg_path)
             self.root = self.tree.getroot()
@@ -24,6 +39,16 @@ class SVGColorize:
             self.root = None
 
     def change_fill_color_by_class(self, class_name, new_color):
+        """
+        Change the fill color of all elements with the specified class.
+        
+        Parameters
+        ----------
+        class_name : str
+            The class attribute value to target (e.g., 'primary', 'secondary')
+        new_color : str
+            The new fill color to apply (e.g., '#ff0000', '#44DEB0')
+        """
         if self.root is None:
             print("No SVG data to modify.")
             return
@@ -33,12 +58,28 @@ class SVGColorize:
             element.attrib["fill"] = new_color
 
     def save_to_string(self):
+        """
+        Convert the modified SVG to a string.
+        
+        Returns
+        -------
+        str or None
+            The SVG as a string, or None if there was an error
+        """
         if self.root is None:
             print("No SVG data to save.")
             return None
         return etree.tostring(self.root).decode()
 
     def save_to_file(self, output_path):
+        """
+        Save the modified SVG to a file.
+        
+        Parameters
+        ----------
+        output_path : str
+            Path where the modified SVG will be saved
+        """
         if self.tree is None:
             print("No SVG data to save.")
             return
@@ -58,6 +99,25 @@ def colorize_icon(
     color_secondary: str = "",
     color_tertiary: str = "",
 ):
+    """
+    Colorize an SVG icon by replacing fill colors for elements with specific classes.
+    
+    Parameters
+    ----------
+    icon_name : str
+        Path to the SVG file
+    color_primary : str
+        Color to apply to elements with class="primary"
+    color_secondary : str, optional
+        Color to apply to elements with class="secondary"
+    color_tertiary : str, optional
+        Color to apply to elements with class="tertiary"
+        
+    Returns
+    -------
+    str or None
+        The colorized SVG as a string, or None if there was an error
+    """
     icon = SVGColorize(icon_name)
     icon.change_fill_color_by_class("primary", color_primary)
 
@@ -85,7 +145,7 @@ window = QWidget()
 layout = QVBoxLayout()
 
 # Get SVG data from colorize_icon
-svg_data = colorize_icon("example.svg", "#fafafa", "#44DEB0", "#ff0000")
+svg_data = colorize_icon("example2.svg", "#fafafa", "#44DEB0", "#ff0000")
 svg_bytes = QByteArray(svg_data.encode())  # Convert SVG data to bytes
 
 # Create QPixmap from SVG data

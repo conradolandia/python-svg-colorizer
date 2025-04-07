@@ -1,0 +1,4 @@
+lxml>=4.9.0
+qtpy>=2.0.0
+PyQt5>=5.15.0
+qdarkstyle>=3.0.0 
