@@ -124,7 +124,7 @@ A class for modifying SVG files by changing the fill colors of elements with spe
 
 ## Examples
 
-The repository includes example SVG files that you can use to test the colorizer:
+The repository includes a cople example SVG files that you can use to test the colorizer, kindly provided by the Spyder Dev Team:
 
 - `example.svg`: An SVG with primary and secondary class elements
 - `example2.svg`: An SVG with primary and tertiary class elements
