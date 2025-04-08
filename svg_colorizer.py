@@ -4,27 +4,21 @@
 # spyder/utils/icon_manager.py
 
 from lxml import etree
-from qtpy.QtWidgets import QApplication, QPushButton, QWidget, QVBoxLayout
-from qtpy.QtGui import QIcon, QPixmap
-from qtpy.QtSvg import QSvgRenderer
-from qtpy.QtCore import QByteArray, Qt
-from PyQt5.QtGui import QPainter
-import qdarkstyle
-
 
 # Methods for colorization.
 class SVGColorize:
     """
     A class for modifying SVG files by changing the fill colors of elements
     with specific class attributes.
-    
+
     This implementation uses lxml for XML parsing and XPath for element selection,
     providing a reliable and maintainable way to manipulate SVG files.
     """
+
     def __init__(self, svg_path):
         """
         Initialize the SVGColorize object with the path to an SVG file.
-        
+
         Parameters
         ----------
         svg_path : str
@@ -41,7 +35,7 @@ class SVGColorize:
     def change_fill_color_by_class(self, class_name, new_color):
         """
         Change the fill color of all elements with the specified class.
-        
+
         Parameters
         ----------
         class_name : str
@@ -60,7 +54,7 @@ class SVGColorize:
     def save_to_string(self):
         """
         Convert the modified SVG to a string.
-        
+
         Returns
         -------
         str or None
@@ -74,7 +68,7 @@ class SVGColorize:
     def save_to_file(self, output_path):
         """
         Save the modified SVG to a file.
-        
+
         Parameters
         ----------
         output_path : str
@@ -87,81 +81,55 @@ class SVGColorize:
             print("Empty path.")
             return
         self.tree.write(output_path, pretty_print=True)
-
-
-def colorize_icon(
-    icon_name: str,
-    color_primary: str,
-    color_secondary: str = "",
-    color_tertiary: str = "",
-):
-    """
-    Colorize an SVG icon by replacing fill colors for elements with specific classes.
-    
-    Parameters
-    ----------
-    icon_name : str
-        Path to the SVG file
-    color_primary : str
-        Color to apply to elements with class="primary"
-    color_secondary : str, optional
-        Color to apply to elements with class="secondary"
-    color_tertiary : str, optional
-        Color to apply to elements with class="tertiary"
         
-    Returns
-    -------
-    str or None
-        The colorized SVG as a string, or None if there was an error
-    """
-    icon = SVGColorize(icon_name)
-    icon.change_fill_color_by_class("primary", color_primary)
-
-    if color_secondary:
-        icon.change_fill_color_by_class("secondary", color_secondary)
-
-    if color_tertiary:
-        icon.change_fill_color_by_class("tertiary", color_tertiary)
-
-    svg_string = icon.save_to_string()
-    return svg_string
-
-
-# usage example
-
-# Create a Qt application
-app = QApplication([])
-
-# Set the dark style
-dark_stylesheet = qdarkstyle.load_stylesheet(qt_api='pyqt5')
-app.setStyleSheet(dark_stylesheet)
-
-# Create a window
-window = QWidget()
-layout = QVBoxLayout()
-
-# Get SVG data from colorize_icon
-svg_data = colorize_icon("example2.svg", "#fafafa", "#44DEB0", "#ff0000")
-svg_bytes = QByteArray(svg_data.encode())  # Convert SVG data to bytes
-
-# Create QPixmap from SVG data
-pixmap = QPixmap(256, 256)  # Specify the size of the icon
-renderer = QSvgRenderer(svg_bytes)
-pixmap.fill(Qt.transparent)  # Fill with transparency
-painter = QPainter(pixmap)
-renderer.render(painter)
-
-# Create QIcon from QPixmap
-icon = QIcon(pixmap)
-
-# Create a button with the icon
-button = QPushButton()
-button.setIcon(icon)
-button.setIconSize(pixmap.size())  # Set icon size to match the pixmap size
-layout.addWidget(button)
-
-window.setLayout(layout)
-window.show()
-
-# Run the application
-app.exec_()
+    def colorize(self, color_primary, color_secondary="", color_tertiary=""):
+        """
+        Apply colors to SVG elements with specific class attributes.
+        
+        Parameters
+        ----------
+        color_primary : str
+            Color to apply to elements with class="primary"
+        color_secondary : str, optional
+            Color to apply to elements with class="secondary"
+        color_tertiary : str, optional
+            Color to apply to elements with class="tertiary"
+            
+        Returns
+        -------
+        str or None
+            The colorized SVG as a string, or None if there was an error
+        """
+        self.change_fill_color_by_class("primary", color_primary)
+        
+        if color_secondary:
+            self.change_fill_color_by_class("secondary", color_secondary)
+            
+        if color_tertiary:
+            self.change_fill_color_by_class("tertiary", color_tertiary)
+            
+        return self.save_to_string()
+        
+    @classmethod
+    def colorize_icon(cls, icon_path, color_primary, color_secondary="", color_tertiary=""):
+        """
+        Class method to colorize an SVG icon in a single call.
+        
+        Parameters
+        ----------
+        icon_path : str
+            Path to the SVG file
+        color_primary : str
+            Color to apply to elements with class="primary"
+        color_secondary : str, optional
+            Color to apply to elements with class="secondary"
+        color_tertiary : str, optional
+            Color to apply to elements with class="tertiary"
+            
+        Returns
+        -------
+        str or None
+            The colorized SVG as a string, or None if there was an error
+        """
+        icon = cls(icon_path)
+        return icon.colorize(color_primary, color_secondary, color_tertiary)

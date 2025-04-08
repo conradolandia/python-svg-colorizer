@@ -25,14 +25,36 @@ pip install lxml qtpy PyQt5 qdarkstyle
 
 ## Usage
 
-### Basic Usage
+### Basic Usage - Instance Method
+
+If you need more control or want to perform multiple operations on the same SVG:
 
 ```python
-from SVGColorizer import colorize_icon
+from svg_colorizer import SVGColorize
 
-# Colorize an SVG icon
-svg_string = colorize_icon(
-    icon_name="path/to/icon.svg",
+# Create an instance
+icon_colorizer = SVGColorize("path/to/icon.svg")
+
+# Apply colors
+icon_colorizer.change_fill_color_by_class("primary", "#ff0000")
+icon_colorizer.change_fill_color_by_class("secondary", "#00ff00")
+
+# Get the SVG string or save to file
+svg_string = icon_colorizer.save_to_string()
+# or
+# icon_colorizer.save_to_file("output.svg")
+```
+
+### Basic Usage - Class Method (Convenience)
+
+For quick, one-line colorization:
+
+```python
+from svg_colorizer import SVGColorize
+
+# Colorize an SVG icon using the class method
+svg_string = SVGColorize.colorize_icon(
+    icon_path="path/to/icon.svg",
     color_primary="#ff0000",      # Red for elements with class="primary"
     color_secondary="#00ff00",    # Green for elements with class="secondary"
     color_tertiary="#0000ff"      # Blue for elements with class="tertiary"
@@ -44,15 +66,15 @@ svg_string = colorize_icon(
 ### Using with Qt
 
 ```python
-from SVGColorizer import colorize_icon
+from svg_colorizer import SVGColorize
 from qtpy.QtWidgets import QApplication, QPushButton
 from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtSvg import QSvgRenderer
 from qtpy.QtCore import QByteArray, Qt
 from PyQt5.QtGui import QPainter
 
-# Colorize the SVG
-svg_data = colorize_icon("icon.svg", "#fafafa", "#44DEB0", "#ff0000")
+# Colorize the SVG using the class method
+svg_data = SVGColorize.colorize_icon("icon.svg", "#fafafa", "#44DEB0", "#ff0000")
 
 # Convert to QIcon
 svg_bytes = QByteArray(svg_data.encode())
@@ -88,42 +110,21 @@ For SVG Colorizer to work properly, your SVG files should have class attributes 
 
 A class for modifying SVG files by changing the fill colors of elements with specific class attributes.
 
-#### Methods
+#### Instance Methods
 
-- `__init__(svg_path)`: Initialize with the path to an SVG file
-- `change_fill_color_by_class(class_name, new_color)`: Change the fill color of all elements with the specified class
-- `save_to_string()`: Convert the modified SVG to a string
-- `save_to_file(output_path)`: Save the modified SVG to a file
+-   `__init__(svg_path)`: Initialize with the path to an SVG file.
+-   `change_fill_color_by_class(class_name, new_color)`: Change the fill color of all elements with the specified class.
+-   `colorize(color_primary, color_secondary="", color_tertiary="")`: Apply colors to primary, secondary, and tertiary classes and return the SVG as a string.
+-   `save_to_string()`: Convert the modified SVG to a string.
+-   `save_to_file(output_path)`: Save the modified SVG to a file.
+
+#### Class Method
+
+-   `colorize_icon(icon_path, color_primary, color_secondary="", color_tertiary="")`: A convenience method to load an SVG, apply colors, and return the SVG string in one call.
 
 ### `colorize_icon` Function
 
-```python
-def colorize_icon(
-    icon_name: str,
-    color_primary: str,
-    color_secondary: str = "",
-    color_tertiary: str = "",
-):
-    """
-    Colorize an SVG icon by replacing fill colors for elements with specific classes.
-    
-    Parameters
-    ----------
-    icon_name : str
-        Path to the SVG file
-    color_primary : str
-        Color to apply to elements with class="primary"
-    color_secondary : str, optional
-        Color to apply to elements with class="secondary"
-    color_tertiary : str, optional
-        Color to apply to elements with class="tertiary"
-        
-    Returns
-    -------
-    str or None
-        The colorized SVG as a string, or None if there was an error
-    """
-```
+*(This standalone function has been removed and integrated into the `SVGColorize` class as a class method).*
 
 ## Examples
 
@@ -132,10 +133,12 @@ The repository includes example SVG files that you can use to test the colorizer
 - `example.svg`: An SVG with primary and secondary class elements
 - `example2.svg`: An SVG with primary and tertiary class elements
 
+A Qt-based visual demo is available in `example_usage.py`.
+
 To run the demo:
 
 ```bash
-python SVGColorizer.py
+python example_usage.py
 ```
 
 ## Integration with Spyder
