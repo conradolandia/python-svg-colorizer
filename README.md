@@ -94,7 +94,7 @@ button.setIconSize(pixmap.size())
 
 ## SVG File Requirements
 
-For SVG Colorizer to work properly, your SVG files should have class attributes on the elements you want to colorize:
+For SVG Colorizer to work properly, your SVG files should have class attributes on the elements you want to colorize, and no `fill` attributes:
 
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
@@ -121,10 +121,6 @@ A class for modifying SVG files by changing the fill colors of elements with spe
 #### Class Method
 
 -   `colorize_icon(icon_path, color_primary, color_secondary="", color_tertiary="")`: A convenience method to load an SVG, apply colors, and return the SVG string in one call.
-
-### `colorize_icon` Function
-
-*(This standalone function has been removed and integrated into the `SVGColorize` class as a class method).*
 
 ## Examples
 
